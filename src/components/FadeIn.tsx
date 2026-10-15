@@ -1,6 +1,20 @@
 import { motion } from 'framer-motion'
 import type { CSSProperties, ElementType, ReactNode } from 'react'
 
+type Tag = keyof HTMLElementTagNameMap
+
+// Create each motion component once; creating it during render remounts the
+// children (and their state/focus) on every re-render.
+const motionCache = new Map<Tag, typeof motion.div>()
+const getMotion = (tag: Tag) => {
+  let component = motionCache.get(tag)
+  if (!component) {
+    component = motion.create(tag) as typeof motion.div
+    motionCache.set(tag, component)
+  }
+  return component
+}
+
 interface FadeInProps {
   children: ReactNode
   delay?: number
@@ -22,7 +36,7 @@ export default function FadeIn({
   as = 'div',
   style,
 }: FadeInProps) {
-  const MotionComponent = motion.create(as as keyof HTMLElementTagNameMap)
+  const MotionComponent = getMotion(as as Tag)
 
   return (
     <MotionComponent

@@ -2,9 +2,14 @@
 
 Completed brief — implemented in the React portfolio. Images kept from the previous build (marquee WebPs + decorative assets + portrait).
 
-Update these placeholders when ready:
-- Email: `hello@mbengbright.com` (placeholder in Contact section)
-- LinkedIn / GitHub URLs (currently generic)
+Contact details (set in `src/data/site.ts`):
+- Email: `mbengbright3@gmail.com`
+- WhatsApp: +237 691 890 832
+- LinkedIn: https://www.linkedin.com/in/mbeng-bright-041b582a0/
+- GitHub: https://github.com/Daltonk200
+- Timezone: Cameroon — WAT (UTC+1)
+
+Still to update:
 - Portrait image URL (still using current Figma portrait)
 
 ---
@@ -65,4 +70,4 @@ Images: keep current marquee-sourced WebPs.
 
 - Headline: let's build something impactful
 - Line: have an idea, startup, or business challenge? let's turn it into software that delivers real results.
-- Links: Email · LinkedIn · GitHub
+- Links: Email · WhatsApp · LinkedIn · GitHub

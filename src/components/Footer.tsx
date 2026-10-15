@@ -63,6 +63,14 @@ export default function Footer() {
             {SITE.email}
           </a>
           <a
+            href={SITE.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#D7E2EA]/70 hover:text-[#D7E2EA] transition-colors duration-200"
+          >
+            WhatsApp
+          </a>
+          <a
             href={SITE.linkedin}
             target="_blank"
             rel="noopener noreferrer"

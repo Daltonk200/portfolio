@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { BG } from '../assets/bg'
 import { DECOR } from '../assets/decorations'
 import BgAtmosphere from '../components/BgAtmosphere'
@@ -9,14 +9,48 @@ import FadeIn from '../components/FadeIn'
 import PageHero from '../components/PageHero'
 import { SITE } from '../data/site'
 
+// Unsent form contents are kept in the browser so a refresh doesn't lose them.
+const DRAFT_KEY = 'contact-draft'
+
+type Draft = { name: string; email: string; message: string }
+
+const loadDraft = (): Draft => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}')
+    return {
+      name: typeof saved.name === 'string' ? saved.name : '',
+      email: typeof saved.email === 'string' ? saved.email : '',
+      message: typeof saved.message === 'string' ? saved.message : '',
+    }
+  } catch {
+    return { name: '', email: '', message: '' }
+  }
+}
+
 export default function ContactPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
+  const [draft] = useState(loadDraft)
+  const [name, setName] = useState(draft.name)
+  const [email, setEmail] = useState(draft.email)
+  const [message, setMessage] = useState(draft.message)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
+  const [company, setCompany] = useState('')
 
-  const onSubmit = (e: FormEvent) => {
+  useEffect(() => {
+    if (submitted) return
+    try {
+      if (name || email || message) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, email, message }))
+      } else {
+        localStorage.removeItem(DRAFT_KEY)
+      }
+    } catch {
+      // Storage unavailable (private mode, blocked) — the form still works.
+    }
+  }, [name, email, message, submitted])
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -27,10 +61,30 @@ export default function ContactPage() {
       setError('Please enter a valid email.')
       return
     }
-    setSubmitted(true)
-    const subject = encodeURIComponent(`Portfolio inquiry from ${name}`)
-    const body = encodeURIComponent(`${message}\n\n— ${name}\n${email}`)
-    window.location.href = `mailto:${SITE.email}?subject=${subject}&body=${body}`
+    setSending(true)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message, company }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error ?? 'Could not send your message.')
+      }
+      try {
+        localStorage.removeItem(DRAFT_KEY)
+      } catch {
+        // ignore
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setError(
+        `${err instanceof Error ? err.message : 'Could not send your message.'} You can also email ${SITE.email} directly.`,
+      )
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -70,10 +124,10 @@ export default function ContactPage() {
             {submitted ? (
               <div className="rounded-[28px] border border-[#D7E2EA]/30 p-8 text-center bg-[#0C0C0C]/60 backdrop-blur-sm">
                 <p className="text-[#D7E2EA] font-medium uppercase tracking-widest mb-3">
-                  Thanks — your mail client should open next.
+                  Thanks — your message has been sent.
                 </p>
                 <p className="text-[#D7E2EA]/70 font-light text-sm">
-                  If it didn&apos;t, email {SITE.email} directly.
+                  I&apos;ll get back to you at {email}. {SITE.responseTime}.
                 </p>
               </div>
             ) : (
@@ -113,12 +167,23 @@ export default function ContactPage() {
                     className="w-full rounded-2xl border-2 border-[#D7E2EA]/25 bg-transparent px-5 py-3.5 text-[#D7E2EA] outline-none focus:border-[#D7E2EA] transition-colors resize-y"
                   />
                 </div>
+                <input
+                  type="text"
+                  name="company"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                />
                 {error ? (
                   <p className="text-sm text-red-400">{error}</p>
                 ) : null}
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full px-10 py-3.5 text-sm text-white font-medium uppercase tracking-widest transition-opacity duration-200 hover:opacity-90"
+                  disabled={sending}
+                  className="inline-flex items-center justify-center rounded-full px-10 py-3.5 text-sm text-white font-medium uppercase tracking-widest transition-opacity duration-200 hover:opacity-90 disabled:opacity-60 disabled:cursor-wait"
                   style={{
                     background:
                       'linear-gradient(123deg, #18011F 7%, #B600A8 37%, #7621B0 72%, #BE4C00 100%)',
@@ -128,7 +193,7 @@ export default function ContactPage() {
                     outlineOffset: '-3px',
                   }}
                 >
-                  Send message
+                  {sending ? 'Sending…' : 'Send message'}
                 </button>
               </form>
             )}
@@ -145,6 +210,14 @@ export default function ContactPage() {
                   className="text-[#D7E2EA] text-lg hover:opacity-70 transition-opacity"
                 >
                   {SITE.email}
+                </a>
+                <a
+                  href={SITE.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-2 text-[#D7E2EA] text-lg hover:opacity-70 transition-opacity"
+                >
+                  WhatsApp: {SITE.whatsapp}
                 </a>
               </div>
               <div>

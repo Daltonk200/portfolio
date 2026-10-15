@@ -93,7 +93,7 @@ export const PROJECTS: Project[] = [
     tech: ['Node.js', 'OpenAI', 'n8n', 'Redis', 'Webhooks'],
     featured: true,
     liveUrl: '#',
-    githubUrl: '#',
+    githubUrl: 'https://github.com/Daltonk200',
     images: { col1Top: M(7), col1Bottom: M(14), col2: M(16) },
     overview:
       'An AI agent connected to WhatsApp that handles FAQs, qualifies leads, and escalates complex cases.',
